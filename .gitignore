@@ -1,0 +1,6 @@
+# Jangan upload ke GitHub
+.env
+service-account.json
+auth_info/
+node_modules/
+*.log 

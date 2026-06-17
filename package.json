@@ -1,0 +1,24 @@
+{
+  "name": "bot-keuangan-wa",
+  "version": "1.0.0",
+  "description": "Bot Keuangan WhatsApp — catat pengeluaran via chat & foto struk",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "@hapi/boom": "^10.0.1",
+    "@whiskeysockets/baileys": "^6.7.9",
+    "dotenv": "^16.4.5",
+    "googleapis": "^144.0.0",
+    "qrcode-terminal": "^0.12.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
