@@ -406,14 +406,30 @@ let reconnectCount = 0;
 const MAX_RECONNECT = 5;
 
 async function startBot() {
-  // Hapus session lama jika RESET_SESSION=true (untuk Railway)
+  const fs   = require("fs");
+  const path = require("path");
+
+  // Hapus session jika RESET_SESSION=true
   if (process.env.RESET_SESSION === "true") {
-    const fs = require("fs");
     if (fs.existsSync("./auth_info")) {
       fs.rmSync("./auth_info", { recursive: true, force: true });
       console.log("[Bot] Session lama dihapus. Set RESET_SESSION=false lalu redeploy.");
     }
-    process.exit(0); // berhenti supaya bisa redeploy ulang
+    process.exit(0);
+  }
+
+  // Load session dari Base64 env var jika auth_info belum ada
+  if (process.env.WA_SESSION_BASE64 && !fs.existsSync("./auth_info")) {
+    try {
+      console.log("[Bot] Memuat session WhatsApp dari environment variable...");
+      const AdmZip  = require("adm-zip");
+      const zipBuffer = Buffer.from(process.env.WA_SESSION_BASE64, "base64");
+      const zip       = new AdmZip(zipBuffer);
+      zip.extractAllTo("./auth_info", true);
+      console.log("[Bot] Session berhasil dimuat dari environment variable!");
+    } catch (err) {
+      console.log("[Bot] Gagal memuat session:", err.message);
+    }
   }
 
   const { state, saveCreds } = await useMultiFileAuthState("./auth_info");
