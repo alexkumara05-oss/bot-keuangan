@@ -436,9 +436,30 @@ async function startBot() {
 
   sock.ev.on("creds.update", saveCreds);
 
-  // ── Pairing code: request otomatis saat belum terdaftar ──
+  // ── Pairing code: request otomatis + ulang tiap 55 detik ──
   const usePairingCode = process.env.USE_PAIRING_CODE === "true";
   const phoneNumber    = (process.env.PAIRING_PHONE_NUMBER || "").replace(/[^0-9]/g, "");
+
+  async function showPairingCode() {
+    try {
+      const code = await sock.requestPairingCode(phoneNumber);
+      const now  = new Date().toLocaleTimeString("id-ID");
+      console.log("\n╔══════════════════════════════════════╗");
+      console.log("║     KODE PAIRING WHATSAPP BOT        ║");
+      console.log("╠══════════════════════════════════════╣");
+      console.log(`║  Kode : ${code.padEnd(28)}║`);
+      console.log(`║  Waktu: ${now.padEnd(28)}║`);
+      console.log("╠══════════════════════════════════════╣");
+      console.log("║  WA → Linked Devices →               ║");
+      console.log("║  Link a Device →                     ║");
+      console.log("║  Link with phone number instead      ║");
+      console.log("║  → masukkan kode di atas             ║");
+      console.log("╚══════════════════════════════════════╝");
+      console.log("  (Kode baru otomatis muncul tiap 55 detik)\n");
+    } catch (err) {
+      console.log("[Pairing] Gagal generate kode:", err.message);
+    }
+  }
 
   if (usePairingCode && !sock.authState.creds.registered) {
     if (!phoneNumber) {
@@ -446,18 +467,18 @@ async function startBot() {
       console.log("[Bot] Format: nomor lengkap dengan kode negara, contoh: 628123456789");
       process.exit(1);
     }
+
     await delay(3000); // tunggu koneksi stabil dulu
-    const code = await sock.requestPairingCode(phoneNumber);
-    console.log("\n╔══════════════════════════════════╗");
-    console.log("║   KODE PAIRING WHATSAPP BOT      ║");
-    console.log("╠══════════════════════════════════╣");
-    console.log(`║   Kode: ${code}              ║`);
-    console.log("╠══════════════════════════════════╣");
-    console.log("║  Cara pakai:                     ║");
-    console.log("║  WA → Linked Devices →           ║");
-    console.log("║  Link with phone number →        ║");
-    console.log("║  masukkan kode di atas           ║");
-    console.log("╚══════════════════════════════════╝\n");
+    await showPairingCode();
+
+    // Kirim kode baru otomatis tiap 55 detik selama belum terdaftar
+    const pairingInterval = setInterval(async () => {
+      if (sock.authState.creds.registered) {
+        clearInterval(pairingInterval); // stop kalau sudah berhasil konek
+        return;
+      }
+      await showPairingCode();
+    }, 55_000);
   }
 
   sock.ev.on("connection.update", async ({ connection, lastDisconnect, qr }) => {
