@@ -406,6 +406,16 @@ let reconnectCount = 0;
 const MAX_RECONNECT = 5;
 
 async function startBot() {
+  // Hapus session lama jika RESET_SESSION=true (untuk Railway)
+  if (process.env.RESET_SESSION === "true") {
+    const fs = require("fs");
+    if (fs.existsSync("./auth_info")) {
+      fs.rmSync("./auth_info", { recursive: true, force: true });
+      console.log("[Bot] Session lama dihapus. Set RESET_SESSION=false lalu redeploy.");
+    }
+    process.exit(0); // berhenti supaya bisa redeploy ulang
+  }
+
   const { state, saveCreds } = await useMultiFileAuthState("./auth_info");
   const { version }          = await fetchLatestBaileysVersion();
 
